@@ -5,7 +5,12 @@
   "main": "src/solc-js.js",
   "scripts": {
     "start": "budo demo.js:bundle.js --open --live --ssl",
-    "build": "browserify demo.js > bundle.js"
+    "build": "browserify demo.js > bundle.js",
+    "lint": "eslint src",
+    "test": "mocha -t 30s",
+    "testw": "mocha -w",
+    "coverage": "nyc --reporter=html --reporter=text mocha -t 30s",
+    "dev": "nodemon --exec 'mocha -t 30s'"
   },
   "repository": {
     "type": "git",
@@ -31,6 +36,18 @@
   "devDependencies": {
     "bel": "^6.0.0",
     "budo": "^11.3.2",
+    "chai": "^4.2.0",
+    "cross-fetch": "^2.2.3",
+    "eslint": "^5.9.0",
+    "eslint-plugin-mocha": "^5.2.0",
+    "fake-indexeddb": "^2.0.4",
+    "fetch-mock": "^7.2.5",
+    "istanbul": "^0.4.5",
+    "mocha": "^5.2.0",
+    "mock-browser": "^0.92.14",
+    "nodemon": "^1.18.7",
+    "nyc": "^13.1.0",
+    "sinon": "^7.1.1",
     "smartcontract-app": "^2.0.0"
   }
 }

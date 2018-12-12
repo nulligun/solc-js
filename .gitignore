@@ -2,3 +2,6 @@
 package-lock.json
 
 /@todo
+.vscode/
+.nyc_output/
+coverage/

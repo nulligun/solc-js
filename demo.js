@@ -22,7 +22,8 @@ selectVersion((error, select) => {
   }
   const { releases, nightly, all} = select
 
-  const version = releases[0] // @NOTE: hard code to use latest version
+  // @NOTE: hard code to use latest version
+  const version = releases[0];
 
   select(version, useVersion)
   document.body.appendChild(selector(releases, v => select(v, useVersion)))

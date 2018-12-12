@@ -1,41 +1,41 @@
 function isValidHash (hash) {
-  return /^[0-9a-f]{64}$/.test(hash)
+  return /^[0-9a-f]{64}$/.test(hash);
 }
 function getFile (gateway, url, cb) {
-  url = gateway + '/' + url
+  url = gateway + '/' + url;
   return fetch(url, { method: 'GET' }).then(response => {
-    var data = response.text()
-    if (!response.ok || response.status !== 200) return cb(data)
-    return cb(null, data, url)
-  }).catch(err => cb(err || 'Unknown transport error'))
+    var data = response.text();
+    if (!response.ok || response.status !== 200) return cb(data);
+    return cb(null, data, url);
+  }).catch(err => cb(err || 'Unknown transport error'));
 }
 function putFile (gateway, content, cb) {
-  var url = gateway + '/bzz-raw:/'
+  var url = gateway + '/bzz-raw:/';
   return fetch(url, { method: 'POST', body: content }).then(response => {
-    var data = response.text()
-    if (!response.ok || response.status !== 200) return cb(data)
-    if (!isValidHash(body)) return cb('Invalid hash')
-    return cb(null, data, url)
-  }).catch(err => cb(err || 'Unknown transport error'))
+    var data = response.text();
+    if (!response.ok || response.status !== 200) return cb(data);
+    if (!isValidHash(body)) return cb('Invalid hash');
+    return cb(null, data, url);
+  }).catch(err => cb(err || 'Unknown transport error'));
 }
 function swarmgwMaker (opts) {
-  opts = opts || {}
-  var gateway
+  opts = opts || {};
+  var gateway;
   if (opts.gateway) {
-    gateway = opts.gateway
+    gateway = opts.gateway;
   } else if (opts.mode === 'http') {
-    gateway = 'http://swarm-gateways.net'
+    gateway = 'http://swarm-gateways.net';
   } else {
-    gateway = 'https://swarm-gateways.net'
+    gateway = 'https://swarm-gateways.net';
   }
   return {
     get: function (url, cb) {
-      return getFile(gateway, url, cb)
+      return getFile(gateway, url, cb);
     },
     put: function (content, cb) {
-      return putFile(gateway, content, cb)
+      return putFile(gateway, content, cb);
     }
-  }
+  };
 }
 var swarmgw = swarmgwMaker()
 
