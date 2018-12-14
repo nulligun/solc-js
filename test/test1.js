@@ -30,6 +30,20 @@ describe('test1', () => {
     url.should.match(/solc-bin.ethereum.org/);
   });
 
+  it('version2url nightly', async () => {
+    let version = 'nightly';
+    let url = await solcjs.version2url(version);
+    url.should.be.a('string');
+    url.should.match(/solc-bin.ethereum.org/);
+  });
+
+  it('version2url latest', async () => {
+    let version = 'latest';
+    let url = await solcjs.version2url(version);
+    url.should.be.a('string');
+    url.should.match(/solc-bin.ethereum.org/);
+  });
+
   after(() => {
     fetchMock.restore();
   });
