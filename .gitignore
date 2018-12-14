@@ -5,3 +5,4 @@ package-lock.json
 .vscode/
 .nyc_output/
 coverage/
+compile.json
