@@ -5,15 +5,17 @@ module.exports = compiler;
 function compiler(_compiler) {
   const newCompiler = {};
   Object.keys(_compiler).forEach(key => {
-    // console.log('key:', key);
-    
+
     if (key === 'compile') {
+      
       // @TODO: allow to pass FILE_PATH instead of SOURCE_CODE
-      newCompiler.compile = function (version, sourcecode = '') {
+      newCompiler.compile = function (sourcecode = '') {
         // console.error(`[on:compile:start] solc.compile(sourcecode)`)
         return new Promise(function (resolve, reject) {
           var data = _compiler.compile(sourcecode, 1);
-
+          // console.log('=== key ====');
+          // console.log(Object.keys(data));
+          
           compileLog(data);
 
           if (!Object.keys(data.contracts).length) {
@@ -22,10 +24,11 @@ function compiler(_compiler) {
             return reject(err);
             // return resolve(err);
           }
-          var output = format(version, data);
+          var output = format(_compiler.opts, data);
           resolve(output);
         });
       };
+      
     }
     else if (typeof _compiler[key] === 'function') {
       newCompiler[key] = function (...args) {
@@ -65,7 +68,7 @@ function getStandardError(err) {
 }
 
 function compileLog(data) {
-  console.log('=== compileLog ===');
+  // console.log('=== compileLog ===');
   // console.log('data:\n', data);
   var fs = require('fs');
   var util = require('util');

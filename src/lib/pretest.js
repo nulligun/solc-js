@@ -2,9 +2,9 @@ module.exports = protest;
 
 async function protest(solcjs, opts) {
   try {
-    let { url, version } = opts;
+    let { version } = opts;
     let content = getContent(version);
-    await solcjs.compile({ version, url }, content);  
+    await solcjs.compile(content);  
   } catch (error) {
     throw error;
   }
@@ -42,6 +42,102 @@ function getContent(version) {
         greeting = _greeting;
       }
     }`;
+  } else if (version.indexOf('v0.3.')) {
+    content = `
+    contract Ballot {
+
+      struct Voter {
+          uint weight; // weight is accumulated by delegation
+          bool voted;  // if true, that person already voted
+          address delegate; // person delegated to
+          uint vote;   // index of the voted proposal
+      }
+
+      struct Proposal
+      {
+          bytes32 name;   // short name (up to 32 bytes)
+          uint voteCount; // number of accumulated votes
+      }
+
+      address public chairperson;
+
+      mapping(address => Voter) public voters;
+
+      Proposal[] public proposals;
+
+      function Ballot(bytes32[] proposalNames) {
+          chairperson = msg.sender;
+          voters[chairperson].weight = 1;
+
+          for (uint i = 0; i < proposalNames.length; i++) {
+              proposals.push(Proposal({
+                  name: proposalNames[i],
+                  voteCount: 0
+              }));
+          }
+      }
+
+      function giveRightToVote(address voter) {
+          if (msg.sender != chairperson || voters[voter].voted) {
+              throw;
+          }
+          voters[voter].weight = 1;
+      }
+
+      function delegate(address to) {
+        Voter sender = voters[msg.sender];
+        if (sender.voted)
+            throw;
+
+        while (
+            voters[to].delegate != address(0) &&
+            voters[to].delegate != msg.sender
+        ) {
+            to = voters[to].delegate;
+        }
+
+        if (to == msg.sender) {
+            throw;
+        }
+
+        sender.voted = true;
+        sender.delegate = to;
+        Voter delegate = voters[to];
+        if (delegate.voted) {
+            // If the delegate already voted,
+            // directly add to the number of votes
+            proposals[delegate.vote].voteCount += sender.weight;
+        }
+        else {
+            // If the delegate did not vote yet,
+            // add to her weight.
+            delegate.weight += sender.weight;
+        }
+      }
+
+      function vote(uint proposal) {
+        Voter sender = voters[msg.sender];
+        if (sender.voted)
+            throw;
+        sender.voted = true;
+        sender.vote = proposal;
+
+        proposals[proposal].voteCount += sender.weight;
+      }
+
+      function winningProposal() constant
+              returns (uint winningProposal)
+      {
+        uint winningVoteCount = 0;
+        for (uint p = 0; p < proposals.length; p++) {
+            if (proposals[p].voteCount > winningVoteCount) {
+                winningVoteCount = proposals[p].voteCount;
+                winningProposal = p;
+            }
+        }
+      }
+    }
+    `;
   } else {
     content = 'contract x { function g() public {} }';
   }

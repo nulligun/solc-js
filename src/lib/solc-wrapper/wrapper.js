@@ -141,7 +141,7 @@ function getWrapperFormat(sourcecode) {
 
 module.exports = wrapper;
 
-function wrapper(_soljson) {
+function wrapper(opts, _soljson) {
   soljson = _soljson;
   var compileJSON = getCompileJSON();
   var compileJSONMulti = getCompileJSONMulti();
@@ -150,9 +150,8 @@ function wrapper(_soljson) {
   let version = getVersion();
 
   function compile(input, optimise, readCallback) {
-    var v = version();
     var result = '';
-    if (parseFloat(v.substring(0, 5)) >= 0.5) {
+    if (opts.version.indexOf('v0.5.') != -1) {
       result = compileStandardWrapper(JSON.stringify(getWrapperFormat(input)), readCallback);
     } else if (readCallback !== undefined && compileJSONCallback !== null) {
       result = compileJSONCallback(JSON.stringify(input), optimise, readCallback);
@@ -236,6 +235,7 @@ function wrapper(_soljson) {
   let license = getLicense();
 
   return {
+    opts,
     version: version,
     semver: versionToSemver,
     license: license,

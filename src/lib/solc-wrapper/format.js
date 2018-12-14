@@ -5,19 +5,24 @@ module.exports = format;
 const R = /^(.*):(\d+):(\d+):(.*):/;
 
 function format ({ version, url }, data) {
-  print(data, version);
+  // print(data, version);
 
   try {
     let output = Object.keys(data.contracts).map(name => {
       let contract = data.contracts[name];
       var {
         functionHashes,
-        runtimeBytecode,
-        srcmapRuntime
+        runtimeBytecode
       } = contract;
 
-      console.log('=== data ====');
-      console.log(data);
+      // console.log('=== data ====');
+      // console.log(Object.keys(data));
+      // console.log('=== contracts ====');
+      // console.log(name);
+      // console.log(data.contracts);
+      // console.log('=== sourceList ====');
+      // console.log(data.sourceList);
+
       const metadata = getMetadata(contract, version);
 
       var compilation = {
@@ -26,7 +31,7 @@ function format ({ version, url }, data) {
         sources: getSource(data, metadata, version, name),
         compiler: getCompile(metadata, version, url),
         assembly: {
-          assembly: getAssembly(contract, metadata, version),
+          assembly: getAssembly(contract, version),
           opcodes: getOpcodes(contract, metadata, version)
         },
         binary: {
@@ -36,7 +41,7 @@ function format ({ version, url }, data) {
           },
           sourcemap: {
             srcmap: getSrcmap(contract, version),
-            srcmapRuntime
+            srcmapRuntime: getSrcmapRuntime(contract, version)
           },
         },
         metadata: {
@@ -69,16 +74,28 @@ function format ({ version, url }, data) {
 }
 
 function getName(name, version) {
-  return (version.indexOf('v0.5.') != -1) ? name : name.substring(1);
+  if (isMatchVersion(version, '0.5')) {
+    return name;
+  } else if (isMatchVersion(version, '0.4')) {
+    return name.substring(1);
+  } else if (isMatchVersion(version, '0.3')) {
+    return name;
+  } else {
+    return;
+  }
 }
 
 function getSrcmap(contract, version) {
   try {
-    if (version.indexOf('v0.5.') != -1) {
+    if (isMatchVersion(version, '0.5')) {
       let name = Object.keys(contract)[0];
       return contract[name].evm.bytecode.sourceMap;
-    } else {
+    } else if (isMatchVersion(version, '0.4')) {
       return contract.srcmap;
+    } else if (isMatchVersion(version, '0.3')) {
+      return contract.srcmap;
+    } else {
+      return;
     }
   } catch (error) {
     console.error('[ERROR] parse srcmap fail');
@@ -88,11 +105,30 @@ function getSrcmap(contract, version) {
 
 function getBytecode(contract, version) {
   try {
-    if (version.indexOf('v0.5.') != -1) {
+    if (isMatchVersion(version, '0.5')) {
       let name = Object.keys(contract)[0];
       return contract[name].evm.bytecode.object;
-    } else {
+    } else if (isMatchVersion(version, '0.4')) {
       return contract.bytecode;
+    } else if (isMatchVersion(version, '0.3')) {
+      return contract.bytecode;
+    } else {
+      return;
+    }
+  } catch (error) {
+    console.error('[ERROR] parse bytecode fail');
+    throw error;
+  }
+}
+
+function getSrcmapRuntime(contract, version) {
+  try {
+    if (isMatchVersion(version, '0.5') || isMatchVersion(version, '0.4')) {
+      return contract.srcmapRuntime;
+    } else if (isMatchVersion(version, '0.3')) {
+      return contract['srcmap-runtime'];
+    } else {
+      return;
     }
   } catch (error) {
     console.error('[ERROR] parse bytecode fail');
@@ -102,11 +138,15 @@ function getBytecode(contract, version) {
 
 function getOpcodes(contract, metadata, version) {
   try {
-    if (version.indexOf('v0.5.') != -1) {
+    if (isMatchVersion(version, '0.5')) {
       let name = Object.keys(contract)[0];
       return contract[name].evm.bytecode.opcodes;
-    } else {
+    } else if (isMatchVersion(version, '0.4')) {
       return contract.opcodes;
+    } else if (isMatchVersion(version, '0.3')) {
+      return contract.opcodes;
+    } else {
+      return;
     }
   } catch (error) {
     console.error('[ERROR] parse opcodes fail');
@@ -114,13 +154,17 @@ function getOpcodes(contract, metadata, version) {
   }
 }
 
-function getAssembly(contract, metadata, version) {
+function getAssembly(contract, version) {
   try {
-    if (version.indexOf('v0.5.') != -1) {
+    if (isMatchVersion(version, '0.5')) {
       let name = Object.keys(contract)[0];
       return contract[name].evm.legacyAssembly;
-    } else {
+    } else if (isMatchVersion(version, '0.4')) {
       return contract.assembly;
+    } else if (isMatchVersion(version, '0.3')) {
+      return contract.assembly;
+    } else {
+      return;
     }
   } catch (error) {
     console.error('[ERROR] parse assembly fail');
@@ -130,11 +174,13 @@ function getAssembly(contract, metadata, version) {
 
 function getGasEstimates(contract, metadata, version) {
   try {
-    if (version.indexOf('v0.5.') != -1) {
+    if (isMatchVersion(version, '0.5')) {
       let name = Object.keys(contract)[0];
       return contract[name].evm.gasEstimates;
-    } else {
+    } else if (isMatchVersion(version, '0.4') || isMatchVersion(version, '0.3')) {
       return contract.gasEstimates;
+    } else {
+      return;
     }
   } catch (error) {
     console.error('[ERROR] parse gasEstimates fail');
@@ -144,24 +190,26 @@ function getGasEstimates(contract, metadata, version) {
 
 function getAST(name, data, version) {
   let ast;
-  if (version.indexOf('v0.5.') != -1) {
-    // NOT HAVE
+  if (isMatchVersion(version, '0.5')) {
+    // DONT HAVE
     ast = data.sources[name].ast;
+  } else if (isMatchVersion(version, '0.4') || isMatchVersion(version, '0.3')) {
+    ast = data.sources[''].AST;
   } else {
-    ast = data.sources[''].AST;    
+    return;
   }
-  // console.log('=== getAST ====');
-  // console.log(ast);
   return ast;
 }
 
 function getUserDoc(contract, metadata, version) {
   try {
-    if (version.indexOf('v0.5.') != -1) {
+    if (isMatchVersion(version, '0.5')) {
       let name = Object.keys(contract)[0];
       return contract[name].userdoc;
-    } else {
+    } else if (isMatchVersion(version, '0.4')) {
       return metadata.output.userdoc;
+    } else {
+      return;
     }
   } catch (error) {
     console.error('[ERROR] parse userdoc fail');
@@ -171,11 +219,13 @@ function getUserDoc(contract, metadata, version) {
 
 function getDevDoc(contract, metadata, version) {
   try {
-    if (version.indexOf('v0.5.') != -1) {
+    if (isMatchVersion(version, '0.5')) {
       let name = Object.keys(contract)[0];
       return contract[name].devdoc;
-    } else {
+    } else if (isMatchVersion(version, '0.4')) {
       return metadata.output.devdoc;
+    } else {
+      return;
     }
   } catch (error) {
     console.error('[ERROR] parse devdoc fail');
@@ -185,11 +235,16 @@ function getDevDoc(contract, metadata, version) {
 
 function getABI(contract, version) {
   try {
-    if (version.indexOf('v0.5.') != -1) {
+    if (isMatchVersion(version, '0.5')) {
       let name = Object.keys(contract)[0];
       return contract[name].abi;
+    } else if (isMatchVersion(version, '0.4')) {
+      return contract.interface;
+    } else if (isMatchVersion(version, '0.3')) {
+      console.log(typeof contract.interface);
+      return JSON.parse(contract.interface);
     } else {
-      return contract.abi;
+      return;
     }
   } catch (error) {
     console.error('[ERROR] parse abi fail');
@@ -199,20 +254,19 @@ function getABI(contract, version) {
 
 function getMetadata(contract, version) {
   try {
-    if (version.indexOf('v0.5.') != -1) {
+    if (isMatchVersion(version, '0.5')) {
       let name = Object.keys(contract)[0];
       // let { metadata, abi, evm } 
       let { metadata } = contract[name];
       metadata = JSON.parse(metadata);
-      console.log('=== metadata ====');
-      console.log(metadata);
-      // console.log('=== old output ====');
-      // console.log(contract[name]);
-      
+      // console.log('=== metadata ====');
+      // console.log(metadata);
       return metadata;
-    } else {
+    } else if (isMatchVersion(version, '0.4')) {
       return JSON.parse(contract.metadata);
-    }  
+    } else {
+      return;
+    }
   } catch (error) {
     console.error('[ERROR] parse metadata fail');
     throw error;
@@ -220,22 +274,31 @@ function getMetadata(contract, version) {
 }
 
 function getCompile(metadata, version, url) {
+  let language, evmVersion, optimizer, runs;
+
+  if (isMatchVersion(version, '0.5') || isMatchVersion(version, '0.4')) {
+    language = metadata.language.toLowerCase();
+    evmVersion = metadata.settings.evmVersion;
+    optimizer = metadata.settings.optimizer.enabled;
+    runs = metadata.settings.optimizer.runs;
+  } else {
+    // TODO
+  }
+
   return {
-    language: metadata.language.toLowerCase(),
+    language,
     version: version,
-    url: url,
-    evmVersion: metadata.settings.evmVersion,
-    optimizer: metadata.settings.optimizer.enabled,
-    runs: metadata.settings.optimizer.runs,
+    url,
+    evmVersion,
+    optimizer,
+    runs,
   };
 }
 
 function getSource(data, metadata, version, name) {
   let sources = {};
-  if (version.indexOf('v0.5.') != -1) {
-    // console.log('=== metadata.settings ====');
-    // console.log(metadata.settings);
-    
+
+  if (isMatchVersion(version, '0.5')) {
     sources = {
       sourcecode: {
         keccak256: getKeccak256(metadata, version, name),
@@ -246,7 +309,7 @@ function getSource(data, metadata, version, name) {
       libraries: metadata.settings.libraries,
       sourcelist: [''] // DONT HAVE
     };
-  } else {
+  } else if (isMatchVersion(version, '0.4')) {
     sources = {
       sourcecode: metadata.sources[''],
       compilationTarget: metadata.settings.compilationTarget[''],
@@ -254,6 +317,16 @@ function getSource(data, metadata, version, name) {
       libraries: metadata.settings.libraries,
       sourcelist: data.sourceList
     };
+  } else if (isMatchVersion(version, '0.3')) {
+    sources = {
+      sourcecode: '',
+      compilationTarget: '',
+      remappings: '',
+      libraries: '',
+      sourcelist: data.sourceList
+    };
+  } else {
+    return;
   }
   return sources;
 }
@@ -269,6 +342,10 @@ function getKeccak256(metadata, version, name) {
     console.error('[ERROR] parse source keccak256 fail');
     throw error;
   }
+}
+
+function isMatchVersion(version, match) {
+  return version.indexOf(`v${match}.`) != -1;
 }
 
 function print(data, version) {

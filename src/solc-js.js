@@ -40,12 +40,12 @@ function solcjs(version) {
       console.time('[load compiler]');
       const solc = load(compilersource);
       console.timeEnd('[load compiler]');
-      // console.debug('compiler length:', compilersource.length)
-      // console.log(Object.keys(compiler).length)
-
       console.time('[wrap compiler]');
-      const _compiler = wrapper(solc);
+      const _compiler = wrapper({ version, url }, solc);
+      
       const solcjs = api(_compiler);
+      solcjs.compile.version = { name: version, url };
+
       console.timeEnd('[wrap compiler]');
 
       try {
@@ -143,8 +143,4 @@ function load (sourcecode) {
   if (exists) window.Module = oldModule;
   else delete window.Module;
   return compiler;
-}
-
-function url2version(compilerURL) {
-  return (compilerURL.split('-')[1]).split('+')[0];
 }
