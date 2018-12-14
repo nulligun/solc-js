@@ -48,7 +48,7 @@ describe.skip('solcjs', () => {
   });
 
   it('v0.4.21', async () => {
-    let version = 'v0.4.23-stable-2018.04.19';
+    let version = 'v0.4.21-stable-2018.03.07';
     let compiler = await solcjs(version);
     compiler.should.be.a('function');
   });
