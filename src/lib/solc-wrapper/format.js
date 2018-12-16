@@ -51,11 +51,12 @@ function format ({ version, url }, data) {
           functionHashes,
           gasEstimates: getGasEstimates(contract, metadata, version),
           analysis: (() => {
-            var result = { warnings: [], others: [] };
-            for (var error in data.errors) {
-              var message = data.errors[error];
-              var type = R.exec(message)[4].trim().toLowerCase()
-                ; (result[type] || (result[type] = [])).push(message)
+            let result = { warnings: [], others: [] };
+            for (let error in data.errors) {
+              let message = data.errors[error];
+              let type = R.exec(message)[4].trim().toLowerCase();
+              if (type == 'warning') type = 'warnings';
+              (result[type] || (result[type] = [])).push(message);
             }
             return result;
           })()
@@ -78,7 +79,7 @@ function getName(name, version) {
     return name;
   } else if (isMatchVersion(version, '0.4')) {
     return name.substring(1);
-  } else if (isMatchVersion(version, '0.3')) {
+  } else if (isMatchVersion(version, '0.3', '0.2')) {
     return name;
   } else {
     return;
@@ -90,9 +91,7 @@ function getSrcmap(contract, version) {
     if (isMatchVersion(version, '0.5')) {
       let name = Object.keys(contract)[0];
       return contract[name].evm.bytecode.sourceMap;
-    } else if (isMatchVersion(version, '0.4')) {
-      return contract.srcmap;
-    } else if (isMatchVersion(version, '0.3')) {
+    } else if (isMatchVersion(version, '0.4', '0.3')) {
       return contract.srcmap;
     } else {
       return;
@@ -110,7 +109,7 @@ function getBytecode(contract, version) {
       return contract[name].evm.bytecode.object;
     } else if (isMatchVersion(version, '0.4')) {
       return contract.bytecode;
-    } else if (isMatchVersion(version, '0.3')) {
+    } else if (isMatchVersion(version, '0.3', '0.2')) {
       return contract.bytecode;
     } else {
       return;
@@ -123,7 +122,7 @@ function getBytecode(contract, version) {
 
 function getSrcmapRuntime(contract, version) {
   try {
-    if (isMatchVersion(version, '0.5') || isMatchVersion(version, '0.4')) {
+    if (isMatchVersion(version, '0.5', '0.4')) {
       return contract.srcmapRuntime;
     } else if (isMatchVersion(version, '0.3')) {
       return contract['srcmap-runtime'];
@@ -143,7 +142,7 @@ function getOpcodes(contract, metadata, version) {
       return contract[name].evm.bytecode.opcodes;
     } else if (isMatchVersion(version, '0.4')) {
       return contract.opcodes;
-    } else if (isMatchVersion(version, '0.3')) {
+    } else if (isMatchVersion(version, '0.3', '0.2')) {
       return contract.opcodes;
     } else {
       return;
@@ -161,7 +160,7 @@ function getAssembly(contract, version) {
       return contract[name].evm.legacyAssembly;
     } else if (isMatchVersion(version, '0.4')) {
       return contract.assembly;
-    } else if (isMatchVersion(version, '0.3')) {
+    } else if (isMatchVersion(version, '0.3', '0.2')) {
       return contract.assembly;
     } else {
       return;
@@ -177,7 +176,7 @@ function getGasEstimates(contract, metadata, version) {
     if (isMatchVersion(version, '0.5')) {
       let name = Object.keys(contract)[0];
       return contract[name].evm.gasEstimates;
-    } else if (isMatchVersion(version, '0.4') || isMatchVersion(version, '0.3')) {
+    } else if (isMatchVersion(version, '0.4', '0.3', '0.2')) {
       return contract.gasEstimates;
     } else {
       return;
@@ -193,7 +192,7 @@ function getAST(name, data, version) {
   if (isMatchVersion(version, '0.5')) {
     // DONT HAVE
     ast = data.sources[name].ast;
-  } else if (isMatchVersion(version, '0.4') || isMatchVersion(version, '0.3')) {
+  } else if (isMatchVersion(version, '0.4', '0.3', '0.2')) {
     ast = data.sources[''].AST;
   } else {
     return;
@@ -238,10 +237,7 @@ function getABI(contract, version) {
     if (isMatchVersion(version, '0.5')) {
       let name = Object.keys(contract)[0];
       return contract[name].abi;
-    } else if (isMatchVersion(version, '0.4')) {
-      return contract.interface;
-    } else if (isMatchVersion(version, '0.3')) {
-      console.log(typeof contract.interface);
+    } else if (isMatchVersion(version, '0.4', '0.3', '0.2')) {
       return JSON.parse(contract.interface);
     } else {
       return;
@@ -282,7 +278,10 @@ function getCompile(metadata, version, url) {
     optimizer = metadata.settings.optimizer.enabled;
     runs = metadata.settings.optimizer.runs;
   } else {
-    // TODO
+    language = 'solidity';
+    // evmVersion = metadata.settings.evmVersion;
+    optimizer = true;
+    runs = 200;
   }
 
   return {
@@ -344,8 +343,11 @@ function getKeccak256(metadata, version, name) {
   }
 }
 
-function isMatchVersion(version, match) {
-  return version.indexOf(`v${match}.`) != -1;
+function isMatchVersion(version, ...match) {
+  for (let m of match) {
+    if (version.indexOf(`v${m}.`) != -1) return true;
+  }
+  return false;
 }
 
 function print(data, version) {
