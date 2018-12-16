@@ -138,6 +138,29 @@ function getContent(version) {
       }
     }
     `;
+  } else if (version.indexOf('v0.2.')) {
+    content = `
+    contract Test {
+      function() { x = 1; }
+      uint x;
+    }
+
+    // This contract rejects any Ether sent to it. It is good
+    // practise to include such a function for every contract
+    // in order not to loose Ether.
+    contract Rejector {
+        function() { throw; }
+    }
+
+    contract Caller {
+      function callTest(address testAddress) {
+          Test(testAddress).call(0xabcdef01); // hash does not exist
+          // results in Test(testAddress).x becoming == 1.
+          Rejector r = Rejector(0x123);
+          r.send(2 ether);
+          // results in r.balance == 0
+      }
+    }`;
   } else {
     content = 'contract x { function g() public {} }';
   }
