@@ -106,8 +106,8 @@ async function v4(version) {
       }
     }`;
   let output = await compiler(sourceCode);
-  console.log('=== output ====');
-  console.dir(output);
+  // console.log('=== output ====');
+  // console.dir(output);
   let item = output[0];
   item.should.have.all.keys('name', 'abi', 'sources', 'compiler', 'assembly', 'binary', 'metadata');
   item.name.should.be.a('string');
@@ -359,7 +359,7 @@ async function v2(version) {
   // metadata.userdoc.should.be.a('object');
 }
 
-describe('check compiler output', () => {
+describe('output', () => {
 
   // ============= 0.5
 
@@ -377,7 +377,7 @@ describe('check compiler output', () => {
     await v4('v0.4.25-stable-2018.09.13');
   });
 
-  it.only('0.4.24', async () => {
+  it('0.4.24', async () => {
     await v4('v0.4.24-stable-2018.05.16');
   });
 

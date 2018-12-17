@@ -2,6 +2,8 @@ const format = require('./solc-wrapper/format.js');
 
 module.exports = compiler;
 
+const R = /^(.*):(\d+):(\d+):(.*):/;
+
 function compiler(_compiler) {
   const newCompiler = {};
   Object.keys(_compiler).forEach(key => {
@@ -19,7 +21,7 @@ function compiler(_compiler) {
           compileLog(data);
 
           if (!Object.keys(data.contracts).length) {
-            var err = data.errors[0];
+            let err = data.errors[0];
             if (typeof err === 'string') err = getStandardError(err);
             return reject(err);
             // return resolve(err);
@@ -56,14 +58,13 @@ function compiler(_compiler) {
 }
 
 function getStandardError(err) {
-  console.log('=== getStandardError ===');
-  var R = /^(.*):(\d+):(\d+):(.*):/;
-  var type = R.exec(err);
+  let type = R.exec(err);
+  type = type ? type[4].trim() : 'Error';
   return {
     component: 'general',
     formattedMessage: err,
     message: err,
-    type: type ? type[4].trim() : 'Error'
+    type
   };
 }
 
