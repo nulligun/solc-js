@@ -12,7 +12,6 @@ function format ({ version, url }, data) {
       let contract = data.contracts[name];
       var {
         functionHashes,
-        runtimeBytecode
       } = contract;
 
       // console.log('=== data ====');
@@ -37,7 +36,7 @@ function format ({ version, url }, data) {
         binary: {
           bytecodes: {
             bytecode: getBytecode(contract, version),
-            runtimeBytecode
+            runtimeBytecode: getRuntimeBytecode(contract, version)
           },
           sourcemap: {
             srcmap: getSrcmap(contract, version),
@@ -120,9 +119,28 @@ function getBytecode(contract, version) {
   }
 }
 
+function getRuntimeBytecode(contract, version) {
+  try {
+    if (isMatchVersion(version, '0.5')) {
+      let name = Object.keys(contract)[0];
+      // return contract[name].evm.deployedBytecode;
+      return contract[name].evm.deployedBytecode.object;
+    } else {
+      return contract.runtimeBytecode; 
+    }
+    
+  } catch (error) {
+    console.error('[ERROR] parse runtime bytecode fail');
+    throw error;
+  }
+}
+
 function getSrcmapRuntime(contract, version) {
   try {
-    if (isMatchVersion(version, '0.5', '0.4')) {
+    if (isMatchVersion(version, '0.5')) {
+      let name = Object.keys(contract)[0];
+      return contract[name].evm.bytecode.sourceMap;
+    } else if (isMatchVersion(version, '0.4')) {
       return contract.srcmapRuntime;
     } else if (isMatchVersion(version, '0.3')) {
       return contract['srcmap-runtime'];
@@ -190,7 +208,6 @@ function getGasEstimates(contract, metadata, version) {
 function getAST(name, data, version) {
   let ast;
   if (isMatchVersion(version, '0.5')) {
-    // DONT HAVE
     ast = data.sources[name].ast;
   } else if (isMatchVersion(version, '0.4', '0.3', '0.2')) {
     ast = data.sources[''].AST;
@@ -306,7 +323,7 @@ function getSource(data, metadata, version, name) {
       compilationTarget: (metadata.settings.compilationTarget)[name],
       remappings: metadata.settings.remappings,
       libraries: metadata.settings.libraries,
-      sourcelist: [''] // DONT HAVE
+      sourcelist: undefined
     };
   } else if (isMatchVersion(version, '0.4')) {
     sources = {
