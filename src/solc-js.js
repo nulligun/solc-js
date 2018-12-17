@@ -41,8 +41,8 @@ function solcjs(version) {
       const solc = load(compilersource);
       console.timeEnd('[load compiler]');
       console.time('[wrap compiler]');
-      const _compiler = wrapper({ version, url }, solc);
-      
+      let _compiler = wrapper(solc);
+      _compiler.opts = { version, url };
       const solcjs = api(_compiler);
       solcjs.compile.version = { name: version, url };
 

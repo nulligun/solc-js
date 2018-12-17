@@ -119,15 +119,17 @@ function getWrapperFormat(sourcecode) {
       metadata: {
         useLiteralContent: true
       },
-      outputSelection: {
-        '*': {
-          '*': [
-            'abi', 'metadata', 'ast', 'devdoc', 'userdoc', 'legacyAST',
-            'evm.bytecode', 'evm.bytecode.sourceMap', 'evm.bytecode.object', 'evm.bytecode.opcodes', 
-            'evm.gasEstimates', 'evm.legacyAssembly'
-          ]
-        }
-      }
+      outputSelection: { '*': { '*': ['*'], '': ['*'] } }
+
+      // outputSelection: {
+      //   '*': {
+      //     '*': [
+      //       'abi', 'metadata', 'ast', 'devdoc', 'userdoc', 'legacyAST',
+      //       'evm.bytecode', 'evm.bytecode.sourceMap', 'evm.bytecode.object', 'evm.bytecode.opcodes', 
+      //       'evm.gasEstimates', 'evm.legacyAssembly'
+      //     ]
+      //   }
+      // }
     },
     sources: {
       'MyContract': {
@@ -141,7 +143,7 @@ function getWrapperFormat(sourcecode) {
 
 module.exports = wrapper;
 
-function wrapper(opts, _soljson) {
+function wrapper(_soljson) {
   soljson = _soljson;
   var compileJSON = getCompileJSON();
   var compileJSONMulti = getCompileJSONMulti();
@@ -151,7 +153,7 @@ function wrapper(opts, _soljson) {
 
   function compile(input, optimise, readCallback) {
     var result = '';
-    if (opts.version.indexOf('v0.5.') != -1) {
+    if (version().indexOf('0.5.') != -1) {
       result = compileStandardWrapper(JSON.stringify(getWrapperFormat(input)), readCallback);
     } else if (readCallback !== undefined && compileJSONCallback !== null) {
       result = compileJSONCallback(JSON.stringify(input), optimise, readCallback);
@@ -235,7 +237,6 @@ function wrapper(opts, _soljson) {
   let license = getLicense();
 
   return {
-    opts,
     version: version,
     semver: versionToSemver,
     license: license,
