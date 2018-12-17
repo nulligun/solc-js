@@ -32,13 +32,13 @@ function getContent(version) {
     content = `
     contract Mortal {
       address public owner;
-      constructor() public { owner = msg.sender; }
+      function Mortal() public { owner = msg.sender; }
       function kill() public { if (msg.sender == owner) selfdestruct(owner); }
     }
 
     contract Greeter is Mortal {
       string public greeting;
-      constructor(string memory _greeting) public {
+      function Greeter(string memory _greeting) public {
         greeting = _greeting;
       }
     }`;
