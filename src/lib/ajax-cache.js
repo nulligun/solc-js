@@ -10,11 +10,11 @@ function ajaxcache(opts, done) {
   if (opts) var url = typeof opts === 'string' ? opts : opts.url;
   if (!url) done(new Error('`url` or `{ url }` must be a string'));
   const { transform, caching } = opts;
-  
+  let timestamp;
   if (window.localStorage[url]) {
     fetch(url, { method: 'HEAD' }).then(response => {
       if (!response.ok) done(response);
-      const timestamp = response.headers.get('last-modified');
+      timestamp = response.headers.get('last-modified');
       cacheFetch({ cache, url, caching, transform, timestamp }, done);
     }).catch(e => {
       console.error('[error]', e);
