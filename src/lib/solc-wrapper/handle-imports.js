@@ -37,106 +37,122 @@ function swarmgwMaker (opts) {
     }
   };
 }
-var swarmgw = swarmgwMaker()
+var swarmgw = swarmgwMaker();
 
 module.exports = class CompilerImports {
-  constructor () {
-    this.previouslyHandled = {} // cache import so we don't make the request at each compilation.
+  constructor() {
+    // cache import so we don't make the request at each compilation.
+    this.previouslyHandled = {};
   }
 
-  handleGithubCall (root, path, cb) {
-    var url = 'https://api.github.com/repos/' + root + '/contents/' + path
+  handleGithubCall(root, path, cb) {
+    var url = 'https://api.github.com/repos/' + root + '/contents/' + path;
     return fetch(url, { method: 'GET' }).then(response => {
-      var data = response.text()
-      if (!response.ok || response.status !== 200) return cb(data)
-      data = JSON.parse(data)
-      if ('content' in data) return cb(null, window.atob(data.content), root + '/' + path)
-      if ('message' in data) return cb(data.message)
-      return cb('Content not received')
-    }).catch(err => cb(err || 'Unknown transport error'))
+      var data = response.text();
+      if (!response.ok || response.status !== 200) return cb(data);
+      data = JSON.parse(data);
+      if ('content' in data) return cb(null, window.atob(data.content), root + '/' + path);
+      if ('message' in data) return cb(data.message);
+      return cb('Content not received');
+    }).catch(err => cb(err || 'Unknown transport error'));
   }
 
-  handleSwarmImport (url, cleanUrl, cb) {
+  handleSwarmImport(url, cleanUrl, cb) {
     swarmgw.get(url, function (err, content) {
-      cb(err, content, cleanUrl)
-    })
+      cb(err, content, cleanUrl);
+    });
   }
 
-  handleIPFS (url, cb) {
+  handleIPFS(url, cb) {
     // replace ipfs:// with /ipfs/
-    url = url.replace(/^ipfs:\/\/?/, 'ipfs/')
-    url = 'https://gateway.ipfs.io/' + url
+    url = url.replace(/^ipfs:\/\/?/, 'ipfs/');
+    url = 'https://gateway.ipfs.io/' + url;
 
     return fetch(url, { method: 'GET' }).then(response => {
-      var data = response.text()
-      if (!response.ok || response.status !== 200) return cb(data)
-      return cb(null, data, url)
-    }).catch(err => cb(err || 'Unknown transport error'))
+      var data = response.text();
+      if (!response.ok || response.status !== 200) return cb(data);
+      return cb(null, data, url);
+    }).catch(err => cb(err || 'Unknown transport error'));
   }
 
-  handleHttpCall (url, cleanUrl, cb) {
-    var url = cleanUrl
+  handleHttpCall(url, cleanUrl, cb) {
+    var url = cleanUrl;
     return fetch(url, { method: 'GET' }).then(response => {
-      var data = response.text()
-      if (!response.ok || response.status !== 200) return cb(data)
-      return cb(null, data, url)
-    }).catch(err => cb(err || 'Unknown transport error'))
+      var data = response.text();
+      if (!response.ok || response.status !== 200) return cb(data);
+      return cb(null, data, url);
+    }).catch(err => cb(err || 'Unknown transport error'));
   }
 
-  handlers () {
+  handlers() {
     return [
-      { type: 'github', match: /^(https?:\/\/)?(www.)?github.com\/([^/]*\/[^/]*)\/(.*)/, handler: (match, cb) => { this.handleGithubCall(match[3], match[4], cb) } },
-      { type: 'http', match: /^(http?:\/\/?(.*))$/, handler: (match, cb) => { this.handleHttpCall(match[1], match[2], cb) } },
-      { type: 'https', match: /^(https?:\/\/?(.*))$/, handler: (match, cb) => { this.handleHttpCall(match[1], match[2], cb) } },
-      { type: 'swarm', match: /^(bzz[ri]?:\/\/?(.*))$/, handler: (match, cb) => { this.handleSwarmImport(match[1], match[2], cb) } },
-      { type: 'ipfs', match: /^(ipfs:\/\/?.+)/, handler: (match, cb) => { this.handleIPFS(match[1], cb) } }
-    ]
+      {
+        type: 'github', match: /^(https?:\/\/)?(www.)?github.com\/([^/]*\/[^/]*)\/(.*)/,
+        handler: (match, cb) => { this.handleGithubCall(match[3], match[4], cb); }
+      },
+      {
+        type: 'http', match: /^(http?:\/\/?(.*))$/,
+        handler: (match, cb) => { this.handleHttpCall(match[1], match[2], cb); }
+      },
+      {
+        type: 'https', match: /^(https?:\/\/?(.*))$/,
+        handler: (match, cb) => { this.handleHttpCall(match[1], match[2], cb); }
+      },
+      {
+        type: 'swarm', match: /^(bzz[ri]?:\/\/?(.*))$/,
+        handler: (match, cb) => { this.handleSwarmImport(match[1], match[2], cb); }
+      },
+      {
+        type: 'ipfs', match: /^(ipfs:\/\/?.+)/,
+        handler: (match, cb) => { this.handleIPFS(match[1], cb); }
+      }
+    ];
   }
 
-  isRelativeImport (url) {
-    return /^([^/]+)/.exec(url)
+  isRelativeImport(url) {
+    return /^([^/]+)/.exec(url);
   }
 
-  import (url, loadingCb, cb) {
-    var self = this
-    var imported = this.previouslyHandled[url]
+  import(url, loadingCb, cb) {
+    var self = this;
+    var imported = this.previouslyHandled[url];
     if (imported) {
-      return cb(null, imported.content, imported.cleanUrl, imported.type, url)
+      return cb(null, imported.content, imported.cleanUrl, imported.type, url);
     }
-    var handlers = this.handlers()
+    var handlers = this.handlers();
 
-    var found = false
+    var found = false;
     handlers.forEach(function (handler) {
       if (found) {
-        return
+        return;
       }
 
-      var match = handler.match.exec(url)
+      var match = handler.match.exec(url);
       if (match) {
-        found = true
+        found = true;
 
-        loadingCb('Loading ' + url + ' ...')
+        loadingCb('Loading ' + url + ' ...');
         handler.handler(match, function (err, content, cleanUrl) {
           if (err) {
-            cb('Unable to import "' + cleanUrl + '": ' + err)
-            return
+            cb('Unable to import "' + cleanUrl + '": ' + err);
+            return;
           }
           self.previouslyHandled[url] = {
             content: content,
             cleanUrl: cleanUrl,
             type: handler.type
-          }
-          cb(null, content, cleanUrl, handler.type, url)
-        })
+          };
+          cb(null, content, cleanUrl, handler.type, url);
+        });
       }
-    })
+    });
 
     if (found) {
-      return
+      return;
     } else if (/^[^:]*:\/\//.exec(url)) {
-      cb('Unable to import "' + url + '": Unsupported URL schema')
+      cb('Unable to import "' + url + '": Unsupported URL schema');
     } else {
-      cb('Unable to import "' + url + '": File not found')
+      cb('Unable to import "' + url + '": File not found');
     }
   }
-}
+};
