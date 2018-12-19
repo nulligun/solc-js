@@ -5,19 +5,10 @@ chai.should();
 
 const solcjs = require('../src/solc-js');
 
-describe.skip('solcjs', () => {
+describe('solcjs', () => {
 
-  // ============= 0.5
-
-  it('v0.5.1', async () => {
-    let version = 'v0.5.1-stable-2018.12.03';
-    let compiler = await solcjs(version);
-    compiler.should.be.a('function');
-  });
-
-  it('v0.5.0', async () => {
-    let version = 'v0.5.0-stable-2018.11.13';
-    let compiler = await solcjs(version);
+  it('latest', async () => {
+    let compiler = await solcjs();
     compiler.should.be.a('function');
   });
 

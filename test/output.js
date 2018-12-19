@@ -173,8 +173,8 @@ async function v3(version) {
     }`;
 
   let output = await compiler(sourceCode);
-  console.log('=== output ====');
-  console.dir(output);
+  // console.log('=== output ====');
+  // console.dir(output);
   let item = output[0];
 
   item.should.have.all.keys('name', 'abi', 'sources', 'compiler', 'assembly', 'binary', 'metadata');
@@ -297,8 +297,8 @@ async function v2(version) {
     `;
 
   let output = await compiler(sourceCode);
-  console.log('=== output ====');
-  console.dir(output);
+  // console.log('=== output ====');
+  // console.dir(output);
   let item = output[0];
 
   item.should.have.all.keys('name', 'abi', 'sources', 'compiler', 'assembly', 'binary', 'metadata');
@@ -423,22 +423,22 @@ describe('output', () => {
 
   // ============= 0.2
 
-  it('v0.2.2', async () => {
+  it('0.2.2', async () => {
     await v2('v0.2.2-stable-2016.03.10');
   });
 
-  it('v0.2.1', async () => {
+  it('0.2.1', async () => {
     await v2('v0.2.1-stable-2016.02.15');
   });
 
-  it('v0.2.0', async () => {
+  it('0.2.0', async () => {
     await v2('v0.2.0-stable-2016.01.31');
   });
 
   it('version', async () => {
     let version = 'v0.4.25-stable-2018.09.13';
     let compiler = await solcjs(version);
-    console.dir(compiler.version);
+    // console.dir(compiler.version);
     compiler.version.name.should.be.a('string');
     compiler.version.url.should.be.a('string');
   });
