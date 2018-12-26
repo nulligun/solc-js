@@ -33,6 +33,34 @@ const CompilerImport = require('solc-wrapper/handle-imports.js')
 module.exports = solcjs
 
 solcjs.version2url = version2url
+solcjs.loadCompiler = loadCompiler
+
+function loadCompiler (compilerURL, done) {
+	if (typeof done !== 'function') return
+	if (typeof compilerURL !== 'string') return done(new Error('`compilerURL` must be a url string'))
+
+	const request = { url: compilerURL, cache: true }
+	console.time('[fetch compiler]')
+	ajax(request, (error, compilersource) => {
+		if (error) return done(error)
+		console.timeEnd('[fetch compiler]')
+		console.time('[load compiler]')
+		const solc = load(compilersource)
+		console.timeEnd('[load compiler]')
+		// ----------------------------------------------------
+		// console.debug('compiler length:', compilersource.length)
+		// console.log(Object.keys(compiler).length)
+		console.time('[wrap compiler]')
+
+		// var zelf = instantiate()
+		// var REMIX_SOLIDITY = new Compiler(_compiler, (url, cb) => zelf.importFileCb(url, cb))
+		// console.log('REMIX_SOLIDITY', REMIX_SOLIDITY)
+
+		const _compiler = wrapper(solc)
+		return done(_compiler)
+	});
+}
+
 
 function solcjs (compilerURL, done) {
   if (typeof done !== 'function') return
