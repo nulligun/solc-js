@@ -52,12 +52,7 @@ function loadCompiler (compilerURL, done) {
 		// console.log(Object.keys(compiler).length)
 		console.time('[wrap compiler]')
 
-		// var zelf = instantiate()
-		// var REMIX_SOLIDITY = new Compiler(_compiler, (url, cb) => zelf.importFileCb(url, cb))
-		// console.log('REMIX_SOLIDITY', REMIX_SOLIDITY)
-
-		const _compiler = wrapper(solc)
-		return done(_compiler)
+		return done(solc)
 	});
 }
 

@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "bel": "^6.0.0",
+    "browserify": "^16.2.3",
     "budo": "^11.3.2",
     "smartcontract-app": "^2.0.0"
   }

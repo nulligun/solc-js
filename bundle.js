@@ -7802,6 +7802,7 @@ module.exports = function (h, opts) {
 
     if (tree[2].length > 2
     || (tree[2].length === 2 && /\S/.test(tree[2][1]))) {
+      if (opts.createFragment) return opts.createFragment(tree[2])
       throw new Error(
         'multiple root elements must be wrapped in an enclosing tag'
       )
@@ -7936,9 +7937,6 @@ module.exports = function (h, opts) {
 function quot (state) {
   return state === ATTR_VALUE_SQ || state === ATTR_VALUE_DQ
 }
-
-var hasOwn = Object.prototype.hasOwnProperty
-function has (obj, key) { return hasOwn.call(obj, key) }
 
 var closeRE = RegExp('^(' + [
   'area', 'base', 'basefont', 'bgsound', 'br', 'col', 'command', 'embed',
@@ -12219,6 +12217,10 @@ var isTopic = function (topic) {
 var SHA3_NULL_S = '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470';
 
 var sha3 = function (value) {
+    if (isBN(value)) {
+        value = value.toString();
+    }
+
     if (isHexStrict(value) && /^0x/i.test((value).toString())) {
         value = hexToBytes(value);
     }
@@ -13311,6 +13313,29 @@ const CompilerImport = require('solc-wrapper/handle-imports.js')
 module.exports = solcjs
 
 solcjs.version2url = version2url
+solcjs.loadCompiler = loadCompiler
+
+function loadCompiler (compilerURL, done) {
+	if (typeof done !== 'function') return
+	if (typeof compilerURL !== 'string') return done(new Error('`compilerURL` must be a url string'))
+
+	const request = { url: compilerURL, cache: true }
+	console.time('[fetch compiler]')
+	ajax(request, (error, compilersource) => {
+		if (error) return done(error)
+		console.timeEnd('[fetch compiler]')
+		console.time('[load compiler]')
+		const solc = load(compilersource)
+		console.timeEnd('[load compiler]')
+		// ----------------------------------------------------
+		// console.debug('compiler length:', compilersource.length)
+		// console.log(Object.keys(compiler).length)
+		console.time('[wrap compiler]')
+
+		return done(_compiler)
+	});
+}
+
 
 function solcjs (compilerURL, done) {
   if (typeof done !== 'function') return
